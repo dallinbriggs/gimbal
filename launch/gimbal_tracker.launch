@@ -1,0 +1,15 @@
+<launch>
+
+<node name="gimbal_tracker" pkg="gimbal" type="tracker" />
+
+<include file="$(find pointgrey_camera_driver)/launch/camera.launch">
+    <node pkg="nodelet" type="nodelet" name="camera_nodelet"
+          args="load pointgrey_camera_driver/PointGreyCameraNodelet camera_nodelet_manager" >
+  <param name="frame_rate" value="30" />
+</node>
+</include>
+
+<node name="Arduino_serial" pkg="rosserial_python" type="serial_node.py" />
+
+
+</launch>

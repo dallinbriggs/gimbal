@@ -75,8 +75,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
         int right_b = 794;
         int upper_b = 369;
         int lower_b = 595;
-        float P_yaw = 5;
-        float P_pitch = 5;
+        float P_yaw = 2;
+        float P_pitch = 2;
 
         if(cx < left_b)
         {
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
     cv::startWindowThread();
 
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe("image_raw", 1, imageCallback);
+    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, imageCallback);
 
     gimbal_yaw_pub = nh.advertise<std_msgs::UInt16>("gimbal_yaw", 1);
     gimbal_pitch_pub = nh.advertise<std_msgs::UInt16>("gimbal_pitch", 1);
