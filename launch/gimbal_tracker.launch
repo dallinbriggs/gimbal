@@ -9,7 +9,7 @@
 </node>
 </include>
 
-<node name="Arduino_serial" pkg="rosserial_python" type="serial_node.py" />
+<!-- <node name="Arduino_serial" pkg="rosserial_python" type="serial_node.py" /> -->
 
 
 </launch>
