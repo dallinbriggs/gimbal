@@ -25,6 +25,10 @@
 
 #include <visp/vpImage.h>
 #include <visp/vpV4l2Grabber.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/core/vpImageTools.h>
+#include <visp3/core/vpImageFilter.h>
+
 
 
 using namespace cv;
@@ -34,7 +38,6 @@ ros::Publisher gimbal_yaw_pub;
 ros::Publisher gimbal_pitch_pub;
 int angle_yaw = 0;
 int angle_pitch = 130;
-
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -162,37 +165,21 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
 void visp_image_callback(const sensor_msgs::ImageConstPtr& msg)
 {
-    sensor_msgs::Image image_msg;
-    image_msg = *msg;
-    vpImage<vpRGBa> image;
-    image = visp_bridge::toVispImageRGBa(*msg);
-    vpV4l2Grabber g;
-//    g.open(image);
-    try {
-#if defined(VISP_HAVE_X11)
-        vpDisplayX d(image);
-#elif defined(VISP_HAVE_GDI)
-        vpDisplayGDI d(image);
-#ielf defined(VISP_HAVE_OPENCV)
-        vpDisplayOpenCV d(image);
-#elif defined(VISP_HAVE_GTK)
-        vpDisplayGTK d(image);
-#elif defined(VISP_HAVE_D3D9)
-        vpDisplayD3d d(image);
-#else
-        std::cout << "No image viewer is available..." << std::endl;
-#endif
-//        while(1) {
-//            g.acquire(image);
-//            vpDisplay::display(image);
-//            vpDisplay::flush(image);
-//            if (vpDisplay::getClick(image, false)) break;
-//        }
+    Mat cv_image, cv_image2; // Use these mats to display the image and receive user input. I can't get vpDisplay to work for some reason.
+    cv_bridge::CvImagePtr image_ptr = cv_bridge::toCvCopy(msg, "bgr8");
+    cv_image = image_ptr->image;
+    flip(cv_image, cv_image, 0);
 
-    }
-    catch(vpException e) {
-        std::cout << "Catch an exception: " << e << std::endl;
-    }
+
+    // The vpImage may be mono, not color for some reason.
+    // What ever transformations you do, you must do to the vpImage so you don't get confused!!!!!!!!!!
+    vpImage<vpRGBa> image;
+//    image = visp_bridge::toVispImageRGBa(*msg);         // This line seems to be correct, as verified from their repository.
+//    vpImageTools::flip(image);                          // This flips the image vertically.
+    vpImageConvert::convert(cv_image,image);
+    vpImageConvert::convert(image,cv_image2);
+    imshow("view", cv_image2);
+    waitKey(1);                                         // Used to display the opencv image. Remember, this is only displaying an image. It is not necessarily the visp image.
 }
 
 
@@ -204,9 +191,10 @@ int main(int argc, char **argv)
     cv::namedWindow("view");
     cv::startWindowThread();
 
+
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, imageCallback);
-//    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, visp_image_callback);
+//    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, imageCallback);
+    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, visp_image_callback);
 
     gimbal_yaw_pub = nh.advertise<std_msgs::UInt16>("gimbal_yaw", 1);
     gimbal_pitch_pub = nh.advertise<std_msgs::UInt16>("gimbal_pitch", 1);
