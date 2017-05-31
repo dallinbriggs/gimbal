@@ -168,8 +168,7 @@ void visp_image_callback(const sensor_msgs::ImageConstPtr& msg)
     Mat cv_image, cv_image2; // Use these mats to display the image and receive user input. I can't get vpDisplay to work for some reason.
     cv_bridge::CvImagePtr image_ptr = cv_bridge::toCvCopy(msg, "bgr8");
     cv_image = image_ptr->image;
-    flip(cv_image, cv_image, 0);
-
+    flip(cv_image, cv_image, -1);
 
     // The vpImage may be mono, not color for some reason.
     // What ever transformations you do, you must do to the vpImage so you don't get confused!!!!!!!!!!
@@ -193,8 +192,8 @@ int main(int argc, char **argv)
 
 
     image_transport::ImageTransport it(nh);
-//    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, imageCallback);
-    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, visp_image_callback);
+    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, imageCallback);
+//    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, visp_image_callback);
 
     gimbal_yaw_pub = nh.advertise<std_msgs::UInt16>("gimbal_yaw", 1);
     gimbal_pitch_pub = nh.advertise<std_msgs::UInt16>("gimbal_pitch", 1);
