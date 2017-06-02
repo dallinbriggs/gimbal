@@ -8,7 +8,8 @@ import tf
 import utilities
 
 from geometry_msgs.msg import Vector3, Vector3Stamped
-from fcu_common.msg import State, GPS
+from rosflight_msgs.msg import State, GPS
+from inertial_sense/GPS.msg import GPS as GPS_ins
 from ros_plane.msg import Current_Path, Controller_Commands
 from nav_msgs.msg import Odometry
 # from inertial_sense.msg import GPS
@@ -43,7 +44,7 @@ class Geopointer(object):
         self.lat2meter = 111039
         self.long2meter = 85094
 
-        rospy.Subscriber("gps", GPS, self.mav_gps_callback)
+        rospy.Subscriber("gps", GPS_ins, self.mav_gps_callback)
         rospy.Subscriber("attitude", State, self.mav_attitude_callback)
         rospy.Subscriber("target_pos", GPS, self.target_callback)
 
