@@ -14,6 +14,23 @@
 #include <cv_bridge/cv_bridge.h>
 #include <std_msgs/UInt16.h>
 
+
+#include <visp_bridge/image.h>
+#include <visp_bridge/camera.h>
+
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/io/vpImageIo.h>
+
+#include <visp/vpImage.h>
+#include <visp/vpV4l2Grabber.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/core/vpImageTools.h>
+#include <visp3/core/vpImageFilter.h>
+
+
+
 using namespace cv;
 //using namespace std;
 
@@ -21,7 +38,6 @@ ros::Publisher gimbal_yaw_pub;
 ros::Publisher gimbal_pitch_pub;
 int angle_yaw = 0;
 int angle_pitch = 130;
-
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -66,73 +82,73 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
                 }
             }
 
-        contour_moments = moments(contours[largest_area_iter],true);
-        cx = int(contour_moments.m10/contour_moments.m00);
-        cy = int(contour_moments.m01/contour_moments.m00);
+            contour_moments = moments(contours[largest_area_iter],true);
+            cx = int(contour_moments.m10/contour_moments.m00);
+            cy = int(contour_moments.m01/contour_moments.m00);
 
 
-        int left_b = 494;
-        int right_b = 794;
-        int upper_b = 369;
-        int lower_b = 595;
-        float P_yaw = 2;
-        float P_pitch = 2;
+            int left_b = 494;
+            int right_b = 794;
+            int upper_b = 369;
+            int lower_b = 595;
+            float P_yaw = 2;
+            float P_pitch = 2;
 
-        if(cx < left_b)
-        {
-            angle_yaw = angle_yaw + 1*P_yaw;
-            std_msgs::UInt16 angle_msg_yaw;
-            angle_msg_yaw.data = int(angle_yaw);
-            if(angle_yaw > 90)
+            if(cx < left_b)
             {
-                angle_yaw = 90;
-                angle_msg_yaw.data = angle_yaw;
+                angle_yaw = angle_yaw + 1*P_yaw;
+                std_msgs::UInt16 angle_msg_yaw;
+                angle_msg_yaw.data = int(angle_yaw);
+                if(angle_yaw > 90)
+                {
+                    angle_yaw = 90;
+                    angle_msg_yaw.data = angle_yaw;
+                }
+                gimbal_yaw_pub.publish(angle_msg_yaw);
             }
-            gimbal_yaw_pub.publish(angle_msg_yaw);
-        }
-        if(cx > right_b)
-        {
-            angle_yaw = angle_yaw - 1*P_yaw;
-            std_msgs::UInt16 angle_msg_yaw;
-            angle_msg_yaw.data = int(angle_yaw);
-            if(angle_yaw < 0)
+            if(cx > right_b)
             {
-                angle_yaw = 0;
-                angle_msg_yaw.data = angle_yaw;
+                angle_yaw = angle_yaw - 1*P_yaw;
+                std_msgs::UInt16 angle_msg_yaw;
+                angle_msg_yaw.data = int(angle_yaw);
+                if(angle_yaw < 0)
+                {
+                    angle_yaw = 0;
+                    angle_msg_yaw.data = angle_yaw;
+                }
+                gimbal_yaw_pub.publish(angle_msg_yaw);
             }
-            gimbal_yaw_pub.publish(angle_msg_yaw);
-        }
 
-        if(cy < lower_b)
-        {
-            angle_pitch = angle_pitch + 1*P_pitch;
-            std_msgs::UInt16 angle_msg_pitch;
-            angle_msg_pitch.data = int(angle_pitch);
-            if(angle_pitch > 130)
+            if(cy < lower_b)
             {
-                angle_pitch = 130;
-                angle_msg_pitch.data = angle_pitch;
+                angle_pitch = angle_pitch + 1*P_pitch;
+                std_msgs::UInt16 angle_msg_pitch;
+                angle_msg_pitch.data = int(angle_pitch);
+                if(angle_pitch > 130)
+                {
+                    angle_pitch = 130;
+                    angle_msg_pitch.data = angle_pitch;
+                }
+                gimbal_pitch_pub.publish(angle_msg_pitch);
             }
-            gimbal_pitch_pub.publish(angle_msg_pitch);
-        }
-        if(cy > upper_b)
-        {
-            angle_pitch = angle_pitch - 1*P_pitch;
-            std_msgs::UInt16 angle_msg_pitch;
-            angle_msg_pitch.data = int(angle_pitch);
-            if(angle_pitch < 40)
+            if(cy > upper_b)
             {
-                angle_pitch = 40;
-                angle_msg_pitch.data = angle_pitch;
+                angle_pitch = angle_pitch - 1*P_pitch;
+                std_msgs::UInt16 angle_msg_pitch;
+                angle_msg_pitch.data = int(angle_pitch);
+                if(angle_pitch < 40)
+                {
+                    angle_pitch = 40;
+                    angle_msg_pitch.data = angle_pitch;
+                }
+                gimbal_pitch_pub.publish(angle_msg_pitch);
             }
-            gimbal_pitch_pub.publish(angle_msg_pitch);
-        }
 
-        line(image_orange, Point(left_b,0), Point(left_b, image_orange.rows), Scalar(200,200,200), 5, LINE_8, 0);
-        line(image_orange, Point(right_b,0), Point(right_b, image_orange.rows), Scalar(200,200,200), 5, LINE_8, 0);
-        line(image_orange, Point(0,upper_b), Point(image_orange.cols, upper_b), Scalar(200,200,200), 5, LINE_8, 0);
-        line(image_orange, Point(0, lower_b), Point(image_orange.cols, lower_b), Scalar(200,200,200), 5, LINE_8, 0);
-        circle(image_orange, Point(cx, cy), 100, Scalar(200,200,200), CV_FILLED, LINE_8, 0);
+            line(image_orange, Point(left_b,0), Point(left_b, image_orange.rows), Scalar(200,200,200), 5, LINE_8, 0);
+            line(image_orange, Point(right_b,0), Point(right_b, image_orange.rows), Scalar(200,200,200), 5, LINE_8, 0);
+            line(image_orange, Point(0,upper_b), Point(image_orange.cols, upper_b), Scalar(200,200,200), 5, LINE_8, 0);
+            line(image_orange, Point(0, lower_b), Point(image_orange.cols, lower_b), Scalar(200,200,200), 5, LINE_8, 0);
+            circle(image_orange, Point(cx, cy), 100, Scalar(200,200,200), CV_FILLED, LINE_8, 0);
         }
         imshow("view", image_orange);
         waitKey(30);
@@ -142,9 +158,27 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
     }
 
-        ROS_INFO("Image size: [%i]", cv_image.cols);
-        ROS_INFO("Image size: [%i]", cv_image.rows);
+    ROS_INFO("Image size: [%i]", cv_image.cols);
+    ROS_INFO("Image size: [%i]", cv_image.rows);
 
+}
+
+void visp_image_callback(const sensor_msgs::ImageConstPtr& msg)
+{
+    Mat cv_image, cv_image2; // Use these mats to display the image and receive user input. I can't get vpDisplay to work for some reason.
+    cv_bridge::CvImagePtr image_ptr = cv_bridge::toCvCopy(msg, "bgr8");
+    cv_image = image_ptr->image;
+    flip(cv_image, cv_image, -1);
+
+    // The vpImage may be mono, not color for some reason.
+    // What ever transformations you do, you must do to the vpImage so you don't get confused!!!!!!!!!!
+    vpImage<vpRGBa> image;
+//    image = visp_bridge::toVispImageRGBa(*msg);         // This line seems to be correct, as verified from their repository.
+//    vpImageTools::flip(image);                          // This flips the image vertically.
+    vpImageConvert::convert(cv_image,image);
+    vpImageConvert::convert(image,cv_image2);
+    imshow("view", cv_image2);
+    waitKey(1);                                         // Used to display the opencv image. Remember, this is only displaying an image. It is not necessarily the visp image.
 }
 
 
@@ -156,8 +190,10 @@ int main(int argc, char **argv)
     cv::namedWindow("view");
     cv::startWindowThread();
 
+
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, imageCallback);
+//    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, visp_image_callback);
 
     gimbal_yaw_pub = nh.advertise<std_msgs::UInt16>("gimbal_yaw", 1);
     gimbal_pitch_pub = nh.advertise<std_msgs::UInt16>("gimbal_pitch", 1);
