@@ -5,7 +5,7 @@ add_definitions(-std=c++11)
 
 ## Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg message_generation image_transport cv_bridge visp_bridge)
-find_package( OpenCV 3 REQUIRED)
+find_package( OpenCV 2 REQUIRED)
 find_package( VISP REQUIRED)
 
 ## Declare ROS messages and services
