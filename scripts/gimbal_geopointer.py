@@ -5,10 +5,10 @@ import numpy as np
 import rospy
 import math
 import tf
-import utilities
+# import utilities
 
 from geometry_msgs.msg import Vector3, Vector3Stamped
-from fcu_common.msg import State, GPS
+from rosflight_msgs.msg import State, Attitude, GPS
 from ros_plane.msg import Current_Path, Controller_Commands
 from nav_msgs.msg import Odometry
 # from inertial_sense.msg import GPS
@@ -24,7 +24,6 @@ class Geopointer(object):
         """
 
         # initialize the target to be the origin
-        # or the swkt for now
         self.target_pos = np.array([0., 0., 0.])
         self.pos = np.array([0., 0., 0.])
         self.phi = 0
@@ -43,8 +42,8 @@ class Geopointer(object):
         rospy.Subscriber("attitude", State, self.mav_attitude_callback)
         rospy.Subscriber("target_pos", Vector3, self.target_callback)
 
-        self.az_pub = rospy.Publisher("gimbal_yaw", UInt16, queue_size=1)
-        self.el_pub = rospy.Publisher("gimbal_pitch", UInt16, queue_size=1)
+        # self.az_pub = rospy.Publisher("gimbal_yaw", UInt16, queue_size=1)
+        # self.el_pub = rospy.Publisher("gimbal_pitch", UInt16, queue_size=1)
         self.gimbal_pub = rospy.Publisher("gimbal/control", Vector3Stamped, queue_size=1)
 
     def target_callback(self, msg):
