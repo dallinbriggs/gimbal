@@ -8,7 +8,7 @@ import tf
 # import utilities
 
 from geometry_msgs.msg import Vector3, Vector3Stamped
-from rosflight_msgs.msg import State, Attitude, GPS
+from rosflight_msgs.msg import State, GPS
 from ros_plane.msg import Current_Path, Controller_Commands
 from nav_msgs.msg import Odometry
 # from inertial_sense.msg import GPS
@@ -38,8 +38,8 @@ class Geopointer(object):
         self.gimbal_az = 0.0
         self.gimbal_el = 0.0
 
-        rospy.Subscriber("gps", GPS, self.mav_gps_callback)
-        rospy.Subscriber("attitude", State, self.mav_attitude_callback)
+        # rospy.Subscriber("state", State, self.mav_pos_callback)
+        rospy.Subscriber("state", State, self.mav_state_callback)
         rospy.Subscriber("target_pos", Vector3, self.target_callback)
 
         # self.az_pub = rospy.Publisher("gimbal_yaw", UInt16, queue_size=1)
@@ -51,11 +51,7 @@ class Geopointer(object):
         # self.target_pos = np.array([msg.latitude, msg.longitude, -msg.altitude])
         self.target_pos = np.array([msg.x, msg.y, msg.z])
 
-    def mav_gps_callback(self, msg):
-        # get the current mav position in the inertial frame
-        self.pos = np.array([msg.latitude, msg.longitude, -msg.altitude])
-
-    def mav_attitude_callback(self, msg):
+    def mav_state_callback(self, msg):
         # get the current mav attitude in the inertial frame
         # quaternion = (
         #     msg.attitude.x,
@@ -70,6 +66,8 @@ class Geopointer(object):
         self.phi = msg.phi
         self.theta = msg.theta
         self.psi = msg.psi
+
+        self.pos = np.array(msg.position)
 
     def compute_gimbal_control(self):
         # find the vector pointing from the mav to the target
@@ -130,11 +128,12 @@ class Geopointer(object):
         vec3Stamped.vector = vec
         self.gimbal_pub.publish(vec3Stamped)
 
-        self.publish_commands()
-
-    def publish_commands(self):
-        self.az_pub.publish(self.gimbal_az)
-        self.el_pub.publish(self.gimbal_el)
+    #     self.publish_commands()
+    #
+    # def publish_commands(self):
+    #     self.az_pub.publish(self.gimbal_az)
+    #     self.el_pub.publish(self.gimbal_el)
+    #     self.gimbal_pub.publish()
 
     def debug_print(self, string, value, label):
         want_to_print = (label == "none"  # Default to not print
