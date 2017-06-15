@@ -123,7 +123,7 @@ class Geopointer(object):
 
         # publish the result to the gimbal control
         vec3Stamped = Vector3Stamped()
-        vec3Stamped.header.stamp = rospy.Time()
+        vec3Stamped.header.stamp = rospy.Time.now()
         vec = Vector3(phi, theta, psi + self.psiWrap)
         vec3Stamped.vector = vec
         self.gimbal_pub.publish(vec3Stamped)
