@@ -128,13 +128,6 @@ class Geopointer(object):
         vec3Stamped.vector = vec
         self.gimbal_pub.publish(vec3Stamped)
 
-    #     self.publish_commands()
-    #
-    # def publish_commands(self):
-    #     self.az_pub.publish(self.gimbal_az)
-    #     self.el_pub.publish(self.gimbal_el)
-    #     self.gimbal_pub.publish()
-
     def debug_print(self, string, value, label):
         want_to_print = (label == "none"  # Default to not print
                         )
