@@ -42,8 +42,6 @@ class Geopointer(object):
         rospy.Subscriber("state", State, self.mav_state_callback)
         rospy.Subscriber("target_pos", Vector3, self.target_callback)
 
-        # self.az_pub = rospy.Publisher("gimbal_yaw", UInt16, queue_size=1)
-        # self.el_pub = rospy.Publisher("gimbal_pitch", UInt16, queue_size=1)
         self.gimbal_pub = rospy.Publisher("gimbal/control", Vector3Stamped, queue_size=1)
 
     def target_callback(self, msg):
@@ -52,16 +50,6 @@ class Geopointer(object):
         self.target_pos = np.array([msg.x, msg.y, msg.z])
 
     def mav_state_callback(self, msg):
-        # get the current mav attitude in the inertial frame
-        # quaternion = (
-        #     msg.attitude.x,
-        #     msg.attitude.y,
-        #     msg.attitude.z,
-        #     msg.attitude.w)
-        # euler = tf.transformations.euler_from_quaternion(quaternion)
-        # self.phi = euler[0]
-        # self.theta = euler[1]
-        # self.psi = euler[2]
 
         self.phi = msg.phi
         self.theta = msg.theta

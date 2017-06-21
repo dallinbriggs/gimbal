@@ -1,3 +1,4 @@
 *.swp
 *.user
 calibration_images/
+*.idea/
