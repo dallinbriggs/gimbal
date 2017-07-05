@@ -68,10 +68,9 @@ class Geopointer(object):
         sTheta = math.sin(self.theta)
         cPsi = math.cos(self.psi)
         sPsi = math.sin(self.psi)
-        R_body_to_v = np.array([[cTheta*cPsi,  sPhi*sTheta*cPsi - cPhi*sPsi,  cPhi*sTheta*cPsi + sPhi*sPsi],
-                                [cTheta*sPsi,  sPhi*sTheta*sPsi + cPhi*cPsi,  cPhi*sTheta*sPsi - sPhi*cPsi],
-                                [  -1*sTheta,                   sPhi*cTheta,                   cPhi*cTheta]])
-        R_v_to_body = np.asarray(np.matrix(R_body_to_v).transpose())
+        R_v_to_body = np.array([[                 cTheta*cPsi,                   cTheta*sPsi,     -1*sTheta],
+                                [sPhi*sTheta*cPsi - cPhi*sPsi,  sPhi*sTheta*sPsi + cPhi*cPsi,   sPhi*cTheta],
+                                [cPhi*sTheta*cPsi + sPhi*sPsi,  cPhi*sTheta*sPsi - sPhi*cPsi,   cPhi*cTheta]])
         self.los = np.dot(R_v_to_body, self.los)
 
         # normalize the gimbal vector
@@ -79,40 +78,13 @@ class Geopointer(object):
         if norm > 0:
             self.los = self.los / norm
 
-        down = np.array([0., 0., 1.])
-
-        # find a vector that points 90 degrees to the right of the object, along
-        # the horizon. This will ensure the gimbal stays level when watching the
-        # target
-        right = np.cross(down, self.los)
-        # normalize it
-        norm = np.linalg.norm(right)
-        if norm > 0:
-            right = right / norm
-        # recalculate down to be orthogonal to los and right
-        down = np.cross(self.los, right)
-
-        # get the euler angles that the gimbal needs to point along the los Vector
-        psi = math.atan2(-right[0], right[1])
-        psi -= math.pi/2.0
-
-        # compensate for wraparound
-        if (psi - self.psiLast) > 1.9*math.pi:
-            self.psiWrap -= 2*math.pi
-        elif (psi - self.psiLast) < -1.9*math.pi:
-            self.psiWrap += 2*math.pi
-        self.psiLast = psi
-
-        phi = math.asin(right[2])
-        theta = math.atan2(-self.los[2], down[2])
-
-        self.gimbal_az = psi
-        self.gimbal_el = theta
+        self.gimbal_az = math.atan2(self.los[1], self.los[0])
+        self.gimbal_el = -1*math.asin(self.los[2])
 
         # publish the result to the gimbal control
         vec3Stamped = Vector3Stamped()
         vec3Stamped.header.stamp = rospy.Time.now()
-        vec = Vector3(phi, theta, psi + self.psiWrap)
+        vec = Vector3(0, self.gimbal_el, self.gimbal_az)
         vec3Stamped.vector = vec
         self.gimbal_pub.publish(vec3Stamped)
 
