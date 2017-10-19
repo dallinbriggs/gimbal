@@ -1,7 +1,11 @@
 
 <launch>
   <arg name="mav_name"            default="tracker"/>
+  <arg name="world_name"    default="$(find rosplane_sim)/worlds/urban.2.world"/>
+
+
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
     <arg name="paused" value="true"/>
     <arg name="gui" value="true"/>
     <arg name="verbose" value="false"/>
@@ -46,8 +50,13 @@
       <remap from="image" to="/tracker/chase/camera/rgb"/>
     </node>
 
-    <node name="gimbal" pkg="image_view" type="image_view">
+    <node name="gimbal_camera" pkg="image_view" type="image_view">
       <remap from="image" to="/tracker/gimbal/camera/rgb"/>
+    </node>
+
+    <node name="gimbal_controller" pkg="gimbal" type="gimbal_geopointer.py">
+      <remap from="state" to="/tracker/state" />
+      <remap from="gimbal/control" to="/tracker/gimbal/control" />
     </node>
   </group>
 

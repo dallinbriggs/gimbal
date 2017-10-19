@@ -9,10 +9,9 @@ import tf
 
 from geometry_msgs.msg import Vector3, Vector3Stamped
 from rosflight_msgs.msg import GPS
-from ros_plane.msg import State, Current_Path, Controller_Commands
+from rosplane_msgs.msg import State, Current_Path, Controller_Commands
 from nav_msgs.msg import Odometry
 # from inertial_sense.msg import GPS
-# from rosflight_msgs.msg import Attitude
 from std_msgs.msg import UInt16
 
 
@@ -40,7 +39,7 @@ class Geopointer(object):
 
         # rospy.Subscriber("state", State, self.mav_pos_callback)
         rospy.Subscriber("state", State, self.mav_state_callback)
-        rospy.Subscriber("target_pos", Vector3, self.target_callback)
+        # rospy.Subscriber("target_pos", Vector3, self.target_callback)
 
         self.gimbal_pub = rospy.Publisher("gimbal/control", Vector3Stamped, queue_size=1)
 
@@ -59,8 +58,8 @@ class Geopointer(object):
 
     def compute_gimbal_control(self):
         # find the vector pointing from the mav to the target
-        self.los = self.target_pos - self.pos
-
+        # self.los = self.target_pos - self.pos
+        self.los = [0, 0, 0] - self.pos
         # rotate los vector into body frame
         cPhi = math.cos(self.phi)
         sPhi = math.sin(self.phi)
