@@ -1,30 +1,28 @@
 #!/usr/bin/env python
-from __future__ import print_function
-import argparse
 import numpy as np
 import rospy
 import math
 import tf
-# import utilities
+import utilities
+import utm
 
-from geometry_msgs.msg import Vector3, Vector3Stamped
+from geometry_msgs.msg import Vector3, Vector3Stamped, PoseStamped
 from rosflight_msgs.msg import GPS
-from rosplane_msgs.msg import State, Current_Path, Controller_Commands
+from rosplane_msgs.msg import Current_Path, Controller_Commands, State
 from nav_msgs.msg import Odometry
-# from inertial_sense.msg import GPS
-from std_msgs.msg import UInt16
-
+from std_msgs.msg import Float32
 
 class Geopointer(object):
 
     def __init__(self):
         """
-        Points a gimbal at a given coordinate in the inertial frame
+        Points a gimbal at a given GPS coordinate in the inertial frame
         """
-
-        # initialize the target to be the origin
-        self.target_pos = np.array([0., 0., 0.])
-        self.pos = np.array([0., 0., 0.])
+        # initialize the target to be the origin for now
+        self.target_gps_pos = np.array([0., 0., 0.])
+        self.mav_gps_pos = np.array([0.,0.,0.])
+        self.target_state_pos = np.array([0., 0., 0.])
+        self.mav_state_pos = np.array([0.,0.,0.])
         self.phi = 0
         self.theta = 0
         self.psi = 0
@@ -37,29 +35,47 @@ class Geopointer(object):
         self.gimbal_az = 0.0
         self.gimbal_el = 0.0
 
-        # rospy.Subscriber("state", State, self.mav_pos_callback)
-        rospy.Subscriber("state", State, self.mav_state_callback)
-        # rospy.Subscriber("target_pos", Vector3, self.target_callback)
+        self.use_gps_position = rospy.get_param("~use_gps_position", default=False)
 
+        rospy.Subscriber("mav_gps", GPS, self.mav_gps_callback)
+        rospy.Subscriber("target_gps", GPS, self.target_gps_callback)
+        rospy.Subscriber("target_state", PoseStamped, self.target_state_callback)
+        rospy.Subscriber("mav_state", State, self.mav_state_callback)
+
+        self.az_pub = rospy.Publisher("gimbal_yaw", Float32, queue_size=1)
+        self.el_pub = rospy.Publisher("gimbal_pitch", Float32, queue_size=1)
         self.gimbal_pub = rospy.Publisher("gimbal/control", Vector3Stamped, queue_size=1)
 
-    def target_callback(self, msg):
-        # get the current target position in the inertial frame
-        # self.target_pos = np.array([msg.latitude, msg.longitude, -msg.altitude])
-        self.target_pos = np.array([msg.x, msg.y, msg.z])
+    def target_gps_callback(self, msg):
+        # Convert gps coordinates to UTM [m] position
+        [easting, northing, zone_number, zone_letter] = utm.from_latlon(msg.latitude, msg.longitude)
+        self.target_gps_pos = np.array([northing, easting, -msg.altitude])
+
+    def target_state_callback(self, msg):
+        position = msg.pose.position
+        self.target_state_pos = np.array([position.x, -position.y, -position.z]) # Convert from NWU to NED
+
+    def mav_gps_callback(self, msg):
+        # Convert gps coordinates to UTM [m] position
+        [easting, northing, zone_number, zone_letter] = utm.from_latlon(msg.latitude, msg.longitude)
+        self.mav_gps_pos = np.array([northing, easting, -msg.altitude])
 
     def mav_state_callback(self, msg):
-
+        self.mav_state_pos = msg.position
         self.phi = msg.phi
         self.theta = msg.theta
         self.psi = msg.psi
 
-        self.pos = np.array(msg.position)
+        # self.compute_gimbal_control()
 
     def compute_gimbal_control(self):
         # find the vector pointing from the mav to the target
-        # self.los = self.target_pos - self.pos
-        self.los = np.array([0., 0., 0.]) - self.pos
+        if self.use_gps_position:
+            self.los = self.target_gps_pos - self.mav_gps_pos
+        else:
+            self.los = self.target_state_pos - self.mav_state_pos
+
+
         # rotate los vector into body frame
         cPhi = math.cos(self.phi)
         sPhi = math.sin(self.phi)
@@ -87,15 +103,11 @@ class Geopointer(object):
         vec3Stamped.vector = vec
         self.gimbal_pub.publish(vec3Stamped)
 
+        self.publish_commands()
 
-    def debug_print(self, string, value, label):
-        want_to_print = (label == "none"  # Default to not print
-                        )
-
-        # Only print the debug messages with the specified label(s)
-        if want_to_print:
-            print(string, end='') # Print with no newline
-            print(value)
+    def publish_commands(self):
+        self.az_pub.publish(self.gimbal_az)
+        self.el_pub.publish(self.gimbal_el)
 
     def clean_shutdown(self):
         print("\nExiting pointer...")
@@ -110,7 +122,7 @@ class Geopointer(object):
 def main():
     """fcu_sim compatible gimbal geopointer
 
-    Commands gimbal azimuth
+    Commands gimbal azimuth and elevation
     """
 
     print("Initializing node... ")
