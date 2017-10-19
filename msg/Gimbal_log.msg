@@ -1,0 +1,4 @@
+Header header
+geometry_msgs/Vector3 gimbal_vector
+geometry_msgs/Vector3 att_vector
+geometry_msgs/Vector3 pos_vector
