@@ -2,8 +2,6 @@
 import numpy as np
 import rospy
 import math
-import tf
-import utilities
 import utm
 
 from geometry_msgs.msg import Vector3, Vector3Stamped, PoseStamped
