@@ -5,7 +5,6 @@ import numpy as np
 import rospy
 import math
 import tf
-# import utilities
 
 from geometry_msgs.msg import Vector3, Vector3Stamped
 from rosflight_msgs.msg import GPS
@@ -38,7 +37,8 @@ class Geopointer(object):
         self.gimbal_el = 0.0
 
         # rospy.Subscriber("state", State, self.mav_pos_callback)
-        rospy.Subscriber("state", State, self.mav_state_callback)
+        # rospy.Subscriber("state", State, self.mav_state_callback)
+        rospy.Subscriber("ins/inertial", Odometry, self.mav_state_callback)
         # rospy.Subscriber("target_pos", Vector3, self.target_callback)
 
         self.gimbal_pub = rospy.Publisher("gimbal/control", Vector3Stamped, queue_size=1)
