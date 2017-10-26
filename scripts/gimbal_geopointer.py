@@ -36,9 +36,8 @@ class Geopointer(object):
         self.gimbal_az = 0.0
         self.gimbal_el = 0.0
 
-        # rospy.Subscriber("state", State, self.mav_pos_callback)
         # rospy.Subscriber("state", State, self.mav_state_callback)
-        rospy.Subscriber("ins/inertial", Odometry, self.mav_state_callback)
+        rospy.Subscriber("inertial_frame", Odometry, self.mav_state_callback)
         # rospy.Subscriber("target_pos", Vector3, self.target_callback)
 
         self.gimbal_pub = rospy.Publisher("gimbal/control", Vector3Stamped, queue_size=1)
@@ -50,11 +49,15 @@ class Geopointer(object):
 
     def mav_state_callback(self, msg):
 
-        self.phi = msg.phi
-        self.theta = msg.theta
-        self.psi = msg.psi
-
-        self.pos = np.array(msg.position)
+        # self.phi = msg.phi
+        # self.theta = msg.theta
+        # self.psi = msg.psi
+        #
+        # self.pos = np.array(msg.position)
+        self.phi = msg.pose.pose.orientation.x
+        self.theta = msg.pose.pose.orientation.y
+        self.psi = msg.pose.pose.orientation.z
+        self.pos = np.array([msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z])
 
     def compute_gimbal_control(self):
         # find the vector pointing from the mav to the target
